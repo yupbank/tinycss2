@@ -1,3 +1,4 @@
+# cython: profile=True
 from __future__ import unicode_literals
 
 import re
@@ -12,11 +13,27 @@ from .ast import (
     UnicodeRangeToken, WhitespaceToken)
 from ._compat import unichr
 
+import cython
+
 
 _NUMBER_RE = re.compile(r'[-+]?([0-9]*\.)?[0-9]+([eE][+-]?[0-9]+)?')
 _HEX_ESCAPE_RE = re.compile(r'([0-9A-Fa-f]{1,6})[ \n\t]?')
 
 
+@cython.locals(
+    css=cython.unicode,
+    c=cython.Py_UCS4,
+    token_start_pos=cython.Py_ssize_t,
+    pos=cython.Py_ssize_t,
+    length=cython.Py_ssize_t,
+    line=cython.Py_ssize_t,
+    column=cython.Py_ssize_t,
+    newline=cython.Py_ssize_t,
+    last_newline=cython.Py_ssize_t,
+    root=cython.list,
+    tokens=cython.list,
+    stack=cython.list,
+)
 def parse_component_value_list(css, preserve_comments=False):
     """The tokenizer and block/function parser.
 
@@ -179,6 +196,14 @@ def parse_component_value_list(css, preserve_comments=False):
     return root
 
 
+@cython.cfunc
+@cython.returns(cython.bint)
+@cython.locals(
+    css=cython.unicode,
+    c=cython.Py_UCS4,
+    pos=cython.Py_ssize_t,
+    length=cython.Py_ssize_t,
+)
 def _is_ident_start(css, pos):
     """Return True if the given position is the start of a CSS identifier."""
     c = css[pos]
@@ -195,6 +220,15 @@ def _is_ident_start(css, pos):
         or (c == '\\' and not css.startswith('\\\n', pos)))
 
 
+@cython.cfunc
+@cython.locals(
+    css=cython.unicode,
+    c=cython.Py_UCS4,
+    start_pos=cython.Py_ssize_t,
+    pos=cython.Py_ssize_t,
+    length=cython.Py_ssize_t,
+    chunks=cython.list,
+)
 def _consume_ident(css, pos):
     """Return (unescaped_value, new_pos).
 
@@ -222,6 +256,16 @@ def _consume_ident(css, pos):
     return ''.join(chunks), pos
 
 
+@cython.cfunc
+@cython.locals(
+    css=cython.unicode,
+    quote=cython.Py_UCS4,
+    c=cython.Py_UCS4,
+    start_pos=cython.Py_ssize_t,
+    pos=cython.Py_ssize_t,
+    length=cython.Py_ssize_t,
+    chunks=cython.list,
+)
 def _consume_quoted_string(css, pos):
     """Return (unescaped_value, new_pos)."""
     # http://dev.w3.org/csswg/css-syntax/#consume-a-string-token
@@ -257,6 +301,13 @@ def _consume_quoted_string(css, pos):
     return ''.join(chunks), pos
 
 
+@cython.cfunc
+@cython.locals(
+    css=cython.unicode,
+    c=cython.Py_UCS4,
+    pos=cython.Py_ssize_t,
+    codepoint=cython.int,
+)
 def _consume_escape(css, pos):
     r"""Return (unescaped_char, new_pos).
 
@@ -276,6 +327,15 @@ def _consume_escape(css, pos):
         return '\uFFFD', pos
 
 
+@cython.cfunc
+@cython.locals(
+    css=cython.unicode,
+    c=cython.Py_UCS4,
+    start_pos=cython.Py_ssize_t,
+    pos=cython.Py_ssize_t,
+    length=cython.Py_ssize_t,
+    chunks=cython.list,
+)
 def _consume_url(css, pos):
     """Return (unescaped_url, new_pos)
 
@@ -350,6 +410,15 @@ def _consume_url(css, pos):
     return None, pos  # bad-url
 
 
+@cython.cfunc
+@cython.locals(
+    css=cython.unicode,
+    c=cython.Py_UCS4,
+    start_pos=cython.Py_ssize_t,
+    pos=cython.Py_ssize_t,
+    length=cython.Py_ssize_t,
+    max_pos=cython.Py_ssize_t,
+)
 def _consume_unicode_range(css, pos):
     """Return (range, new_pos)
 
