@@ -14,6 +14,7 @@ based on the more recent `CSS Syntax Level 3`_ specification.
 * PyPI releases: https://pypi.python.org/pypi/tinycss2/
 * Continuous integration: |travis|
 
-.. |travis| image:: https://travis-ci.org/SimonSapin/tinycss2.svg?branch=master
-    :target: https://travis-ci.org/SimonSapin/tinycss2
-    :alt: https://travis-ci.org/SimonSapin/tinycss2
+
+.. |travis| image:: https://travis-ci.org/yupbank/tinycss2.svg?branch=master
+    :target: https://travis-ci.org/yupbank/tinycss2
+    :alt: https://travis-ci.org/yupbank/tinycss2
